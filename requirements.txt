@@ -1,0 +1,3 @@
+anthropic>=0.112.0
+arxiv>=2.1.0
+PyYAML>=6.0

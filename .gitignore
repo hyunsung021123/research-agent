@@ -1,0 +1,11 @@
+# 환경/캐시 (저장소에 올리지 않음)
+.venv/
+__pycache__/
+*.pyc
+*.log
+data/run.log
+data/run.err.log
+
+# 주의: config.yaml, data/(코퍼스·상태), docs/(대시보드), digests/ 는
+# GitHub Actions + Pages 동작을 위해 '추적'합니다(무시하지 않음).
+# API 키는 어디에도 커밋하지 마세요 — 환경변수 / Actions Secret 사용.

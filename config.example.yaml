@@ -1,0 +1,74 @@
+# AI Research Agent — 설정 (v2: 다중 문제)
+# 이 파일을 config.yaml 로 복사한 뒤 수정하세요. 이 파일은 git 에 올라가도 안전합니다
+# (API 키는 여기에 넣지 않습니다 — 환경변수 / GitHub Actions Secret 사용).
+
+profile:
+  name: "최현성"
+  language: "ko"
+
+# ── 연구 문제들 (각 문제마다 키워드·설명을 따로) ──────────────────
+# 새 문제를 추가하려면 같은 형식으로 항목을 늘리면 됩니다.
+problems:
+  - id: "mcmullen"
+    name: "McMullen's problem (d=5)"
+    description: |
+      McMullen's problem, Larman conjecture f(5)=11, convex position,
+      general position 점 배치, oriented matroid 의 acyclic reorientation,
+      Lawrence oriented matroid, tope graph, signed permutation.
+    keywords:
+      - "mcmullen"
+      - "convex position"
+      - "general position"
+      - "oriented matroid"
+      - "acyclic reorientation"
+      - "lawrence"
+      - "tope"
+
+  - id: "matching-fields"
+    name: "Polyhedral matching fields"
+    description: |
+      polyhedral matching fields, tropical geometry, matching field,
+      Lawrence oriented matroids 의 일반화, regular vs non-regular triangulation,
+      realizability, chirotope, point configuration.
+    keywords:
+      - "matching field"
+      - "tropical"
+      - "triangulation"
+      - "non-regular"
+      - "realizab"
+      - "chirotope"
+      - "point configuration"
+
+# 공통 관심(Tverberg 등)을 별도 문제로 두고 싶으면 위에 항목을 더 추가하세요.
+
+arxiv:
+  categories: ["math.CO", "math.MG", "math.AT", "math.GT"]
+  lookback_days: 7
+  max_fetch_per_category: 200
+  explore_sample: 12        # 키워드 비매칭 논문 탐색 편수(0=끔)
+
+llm:
+  model: "claude-sonnet-4-6"
+  explore_model: "claude-haiku-4-5-20251001"
+  relevance_threshold: 5
+  max_summarize: 40         # 1회 실행당 LLM 호출 상한(전 문제 합산)
+  max_tokens: 1500
+
+learn:                      # 키워드 자동 최적화
+  auto_apply: false         # true 면 고신뢰 키워드를 자동 적용(사람 config 는 안 건드림)
+  min_precision: 0.85       # 자동 적용 최소 판별력
+  min_support: 3            # 자동 적용 최소 고관련 등장 수
+  max_apply_per_run: 3      # 1회 실행당 문제별 자동 적용 상한
+
+notify:                     # 푸시 알림(ntfy.sh)
+  enabled: false
+  ntfy_topic: ""            # 예: "ra-choihs-x7k2q" — 추측 어렵게. 폰 ntfy 앱에서 같은 토픽 구독
+  ntfy_server: "https://ntfy.sh"
+  min_relevance: 7          # 이 점수 이상만 알림
+
+paths:
+  corpus: "data/corpus.jsonl"
+  state: "data/state.json"
+  learned: "data/learned_keywords.json"
+  digests: "digests"
+  dashboard: "docs/index.html"   # GitHub Pages 가 docs/ 를 서빙

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  매일 오전 9시 자동 실행용 macOS LaunchAgent 템플릿.
+
+  설치:
+    1) 아래 __PATH__ 두 곳을 research_agent 절대경로로,
+       __PYTHON__ 을 가상환경 파이썬 절대경로로 바꾼다.
+       (확인: which python3  /  echo "$PWD" )
+    2) 키를 plist 에서 직접 주입하거나(아래 ANTHROPIC_API_KEY) run 스크립트에서 export.
+    3) 복사 후 로드:
+         cp com.researchagent.daily.plist ~/Library/LaunchAgents/
+         launchctl load ~/Library/LaunchAgents/com.researchagent.daily.plist
+    4) 해제: launchctl unload ~/Library/LaunchAgents/com.researchagent.daily.plist
+
+  시간 바꾸기: 아래 Hour/Minute 수정.
+  매주 월요일만: StartCalendarInterval 안에 <key>Weekday</key><integer>1</integer> 추가
+    (0=일, 1=월, … 6=토).
+  잠들어 있던 경우: 깨어날 때 놓친 1회를 실행한다(cron 과 다른 점).
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.researchagent.daily</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__PATH__/run.py</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__PATH__</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>ANTHROPIC_API_KEY</key>
+    <string>sk-ant-여기에-본인키</string>
+  </dict>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>__PATH__/data/run.log</string>
+  <key>StandardErrorPath</key>
+  <string>__PATH__/data/run.err.log</string>
+</dict>
+</plist>
