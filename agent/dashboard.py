@@ -52,11 +52,16 @@ window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
   label.thr output{font-family:var(--mono);color:var(--ink);min-width:1.4em;text-align:right}
   .gear{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit}
   .panel{max-width:880px;margin:0 auto;padding:0 20px;overflow:hidden;max-height:0;transition:max-height .2s}
-  .panel.open{max-height:320px;padding-bottom:12px}
+  .panel.open{max-height:420px;padding-bottom:12px}
   .panel .box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13px}
   .panel input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font:inherit;margin:4px 0 10px}
   .panel button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:8px 14px;cursor:pointer;font:inherit}
-  .panel .hint{color:var(--muted);font-size:12px}
+  .panel .hint{color:var(--muted);font-size:12px;margin-bottom:8px}
+  .refresh-btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;font:inherit;font-size:14px;font-weight:500}
+  .refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+  .refresh-btn .spin{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+  .refresh-btn.loading .spin{display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
   main{max-width:880px;margin:0 auto;padding:14px 20px 64px}
   .count{font-size:13px;color:var(--muted);margin:2px 0 14px;font-family:var(--mono)}
   .card{position:relative;display:grid;grid-template-columns:60px 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px 16px 0;margin-bottom:12px;overflow:hidden}
@@ -101,6 +106,9 @@ window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
     <h1>%%TITLE%%</h1>
     <div class="sub">갱신 %%GENERATED%% · 총 %%TOTAL%%편 <span class="sync" id="sync"></span></div>
     <div class="controls">
+      <button class="refresh-btn" id="refreshBtn">
+        <span class="spin"></span>▶ 지금 업데이트
+      </button>
       <input type="search" id="q" placeholder="제목·요약·초록 검색" aria-label="검색">
       <select id="sort" aria-label="정렬">
         <option value="fav">즐겨찾기 우선</option>
@@ -119,9 +127,12 @@ window.MathJax = { tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
     </div>
   </div>
   <div class="panel" id="panel"><div style="max-width:880px;margin:0 auto"><div class="box">
-    <b>GitHub 동기화</b> — 토큰을 넣으면 즐겨찾기·평가가 저장소에 저장되어 모든 기기에서 공유되고,
-    다음 자동 실행이 탐색 기준에 반영합니다. 비우면 이 기기에만(localStorage) 저장됩니다.
-    <div class="hint">저장소(contents 쓰기 권한)로 범위를 한정한 fine-grained Personal Access Token 을 권장합니다. 토큰은 이 기기 브라우저에만 저장됩니다.</div>
+    <b>GitHub 연동 설정</b>
+    <div class="hint">
+      토큰 권한: <b>Contents</b>(읽기·쓰기) + <b>Actions</b>(읽기·쓰기) — 두 권한이 있어야
+      즐겨찾기·평가 동기화와 수동 업데이트 버튼이 모두 작동합니다.<br>
+      fine-grained Personal Access Token 권장. 토큰은 이 기기 브라우저에만 저장됩니다.
+    </div>
     <input id="ghRepo" placeholder="owner/repo (예: choihs/research-agent) — 비우면 URL 에서 자동 감지">
     <input id="ghToken" type="password" placeholder="github_pat_... (이 기기에만 저장)">
     <button id="ghSave">저장</button> <span class="sync" id="ghStatus"></span>
@@ -267,6 +278,47 @@ document.getElementById("ghSave").addEventListener("click",async()=>{
   document.getElementById("ghStatus").textContent=document.getElementById("sync").textContent;
 });
 setSync(GH.token?("동기화 "+(autoRepo()||"미설정")):"로컬 저장");
+
+// 수동 업데이트 버튼 — GitHub Actions workflow_dispatch 호출
+const refreshBtn = document.getElementById("refreshBtn");
+async function triggerUpdate(){
+  const repo = autoRepo();
+  if(!GH.token || !repo){
+    alert("⚙ 설정에서 GitHub 저장소와 토큰을 먼저 입력해주세요.\n토큰에 Actions 읽기·쓰기 권한이 필요합니다.");
+    return;
+  }
+  refreshBtn.disabled = true;
+  refreshBtn.classList.add("loading");
+  refreshBtn.querySelector(".spin").style.display = "inline-block";
+  setSync("업데이트 요청 중…");
+  try{
+    const url = `https://api.github.com/repos/${repo}/actions/workflows/daily.yml/dispatches`;
+    const res = await fetch(url, {
+      method:"POST",
+      headers:{Authorization:`Bearer ${GH.token}`, Accept:"application/vnd.github+json", "Content-Type":"application/json"},
+      body: JSON.stringify({ref:"main"})
+    });
+    if(res.status === 204){
+      setSync("✅ 업데이트 시작됨 (1~3분 후 새로고침)");
+      // 3분 후 페이지 자동 새로고침
+      setTimeout(()=>location.reload(), 180000);
+    } else {
+      const err = await res.json().catch(()=>({}));
+      const msg = err.message || res.status;
+      if(res.status === 422) setSync("❌ 이미 실행 중이거나 대기 중");
+      else if(res.status === 403) setSync("❌ 권한 없음 — 토큰에 Actions 쓰기 권한 필요");
+      else setSync(`❌ 실패 (${msg})`);
+    }
+  } catch(e){
+    setSync("❌ 네트워크 오류");
+  } finally {
+    setTimeout(()=>{
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove("loading");
+    }, 10000);  // 10초 후 버튼 재활성화(연속 클릭 방지)
+  }
+}
+refreshBtn.addEventListener("click", triggerUpdate);
 apply();
 </script>
 </body>
