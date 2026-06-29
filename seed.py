@@ -134,19 +134,19 @@ SEEDS = [
 
     # ── Polyhedral matching fields — arXiv 있는 논문 ──
     {
-        "arxiv_id": "1911.07960",
+        "arxiv_id": "1804.01595",
         "problem_id": "matching-fields",
-        "note": "Loho, Smith: Matching fields and lattice points of simplices 2019",
+        "note": "Loho, Smith: Matching fields and lattice points of simplices 2018",
     },
     {
-        "arxiv_id": "2009.01584",
+        "arxiv_id": "1809.01026",
         "problem_id": "matching-fields",
-        "note": "Clarke, Mohammadi: Toric degenerations and tropical matching fields 2020",
+        "note": "Mohammadi, Shaw: Toric degenerations of Grassmannians from matching fields 2018",
     },
     {
-        "arxiv_id": "2104.01861",
+        "arxiv_id": "2306.09693",
         "problem_id": "matching-fields",
-        "note": "Bossinger et al.: Computing toric degenerations of flag varieties 2021",
+        "note": "Clarke: Matching Fields in Macaulay2 2023",
     },
 ]
 

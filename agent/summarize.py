@@ -78,6 +78,7 @@ class Evaluation:
 
 
 def _parse_json(text: str) -> dict:
+    import re as _re
     t = text.strip()
     if t.startswith("```"):
         t = t[3:]
@@ -87,7 +88,13 @@ def _parse_json(text: str) -> dict:
     s, e = t.find("{"), t.rfind("}")
     if s != -1 and e != -1 and e > s:
         t = t[s:e + 1]
-    return json.loads(t)
+    # 잘못된 이스케이프(예: \e, \p 등) 를 \\로 교정한 뒤 파싱 시도
+    try:
+        return json.loads(t)
+    except json.JSONDecodeError:
+        # 유효하지 않은 \X 이스케이프를 \\X 로 교정
+        t2 = _re.sub(r'\\([^"\\/bfnrtu])', r'\\\\\1', t)
+        return json.loads(t2)
 
 
 def evaluate(client: Anthropic, paper: Paper, problems: list[Problem],
