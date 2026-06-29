@@ -34,6 +34,9 @@ def prefilter(papers: list[Paper], problems: list[Problem]) -> list[Scored]:
     for p in papers:
         best: Scored | None = None
         for prob in problems:
+            # 제외 키워드 매칭 시 이 문제 후보에서 배제
+            if prob.exclude_keywords and _hits(p, prob.exclude_keywords):
+                continue
             hits = _hits(p, prob.keywords)
             if hits and (best is None or len(hits) > len(best.keyword_hits)):
                 best = Scored(paper=p, problem_id=prob.id, problem_name=prob.name,

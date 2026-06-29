@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from pathlib import Path
 from typing import Iterable
 
@@ -35,8 +36,8 @@ def seen_set(state: dict) -> set[str]:
 
 
 def base_id(arxiv_id: str) -> str:
-    """버전 접미사 제거: 2406.01234v2 -> 2406.01234."""
-    return arxiv_id.split("v")[0] if "v" in arxiv_id else arxiv_id
+    """버전 접미사만 제거: 2406.01234v2 -> 2406.01234 (다른 'v' 는 보존)."""
+    return re.sub(r"v\d+$", "", arxiv_id or "")
 
 
 def append_corpus(path: Path, records: list[dict]) -> None:

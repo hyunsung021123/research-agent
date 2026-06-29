@@ -87,10 +87,27 @@ def propose(
     low: int = 3,
     min_support: int = 2,
     top: int = 25,
+    feedback: dict[str, dict] | None = None,
 ) -> list[Proposal]:
     cur = {k.lower() for k in current_keywords}
-    pos = [r for r in corpus if r.get("relevance", 0) >= high]
-    neg = [r for r in corpus if r.get("relevance", 0) <= low]
+    feedback = feedback or {}
+
+    def label(r: dict) -> str:
+        """up/down 피드백이 있으면 그것이 LLM 점수보다 우선(강한 라벨)."""
+        b = re.sub(r"v\d+$", "", r.get("id", "") or "")
+        v = (feedback.get(b) or {}).get("vote")
+        if v == "up":
+            return "pos"
+        if v == "down":
+            return "neg"
+        if r.get("relevance", 0) >= high:
+            return "pos"
+        if r.get("relevance", 0) <= low:
+            return "neg"
+        return "mid"
+
+    pos = [r for r in corpus if label(r) == "pos"]
+    neg = [r for r in corpus if label(r) == "neg"]
     npos, nneg = max(1, len(pos)), max(1, len(neg))
 
     pos_df: Counter[str] = Counter()

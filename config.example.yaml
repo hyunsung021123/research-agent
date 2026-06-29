@@ -23,6 +23,9 @@ problems:
       - "acyclic reorientation"
       - "lawrence"
       - "tope"
+    exclude_keywords:        # 이 단어가 있으면 후보에서 제외(무관 주제 차단)
+      - "machine learning"
+      - "neural network"
 
   - id: "matching-fields"
     name: "Polyhedral matching fields"
@@ -43,9 +46,10 @@ problems:
 
 arxiv:
   categories: ["math.CO", "math.MG", "math.AT", "math.GT"]
+  core_categories: ["math.CO", "math.MG"]   # 탐색을 이 카테고리로 제한(노이즈↓). 빈 []=제한없음
   lookback_days: 7
   max_fetch_per_category: 200
-  explore_sample: 12        # 키워드 비매칭 논문 탐색 편수(0=끔)
+  explore_sample: 8         # 키워드 비매칭 논문 탐색 편수(0=끔)
 
 llm:
   model: "claude-sonnet-4-6"
@@ -66,9 +70,18 @@ notify:                     # 푸시 알림(ntfy.sh)
   ntfy_server: "https://ntfy.sh"
   min_relevance: 7          # 이 점수 이상만 알림
 
+retention:                  # 누적 논문 수 통제(자동 정리). 즐겨찾기·좋아요는 보호됨
+  keep_days: 90             # 이보다 오래된 논문은 정리 대상
+  keep_top: 0               # >0 이면 비보호 논문 중 관련도 상위 N편만 유지(예: 60)
+  min_relevance: 0          # 이 미만 관련도는 정리(0=끔)
+  protect_favorites: true
+  archive: true             # 정리분을 data/archive.jsonl 로 보관(학습 이력 유지)
+
 paths:
   corpus: "data/corpus.jsonl"
   state: "data/state.json"
   learned: "data/learned_keywords.json"
+  feedback: "data/feedback.json"
+  archive: "data/archive.jsonl"
   digests: "digests"
   dashboard: "docs/index.html"   # GitHub Pages 가 docs/ 를 서빙

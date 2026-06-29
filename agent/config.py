@@ -35,14 +35,16 @@ class Problem:
     keywords: list[str] = field(default_factory=list)        # 사람 + 학습 합본(effective)
     base_keywords: list[str] = field(default_factory=list)   # 사람이 쓴 것만
     learned_keywords: list[str] = field(default_factory=list)  # 자동 학습된 것만
+    exclude_keywords: list[str] = field(default_factory=list)  # 매칭 시 후보에서 제외
 
 
 @dataclass
 class ArxivConfig:
     categories: list[str] = field(default_factory=lambda: ["math.CO", "math.MG"])
+    core_categories: list[str] = field(default_factory=list)  # 탐색을 이 카테고리로 제한(빈값=제한없음)
     lookback_days: int = 7
     max_fetch_per_category: int = 200
-    explore_sample: int = 12
+    explore_sample: int = 8
 
 
 @dataclass
@@ -71,10 +73,21 @@ class NotifyConfig:
 
 
 @dataclass
+class RetentionConfig:
+    keep_days: int = 90        # 이 일수보다 오래된(제출일 기준) 논문은 정리 대상
+    keep_top: int = 0          # >0 이면 비보호 논문 중 관련도 상위 N편만 유지
+    min_relevance: int = 0     # 이 미만 관련도는 정리 대상(0=끔)
+    protect_favorites: bool = True   # 즐겨찾기·좋아요는 절대 삭제 안 함
+    archive: bool = True       # 정리된 논문을 archive.jsonl 로 보관(학습 이력 유지)
+
+
+@dataclass
 class Paths:
     corpus: str = "data/corpus.jsonl"
     state: str = "data/state.json"
     learned: str = "data/learned_keywords.json"
+    feedback: str = "data/feedback.json"
+    archive: str = "data/archive.jsonl"
     digests: str = "digests"
     dashboard: str = "docs/index.html"      # GitHub Pages 가 docs/ 를 서빙
 
@@ -87,6 +100,7 @@ class Config:
     llm: LLMConfig
     learn: LearnConfig
     notify: NotifyConfig
+    retention: RetentionConfig
     paths: Paths
     root: Path
 
@@ -124,7 +138,8 @@ def _build_problems(raw: dict, learned: dict[str, list[str]]) -> list[Problem]:
         eff = list(dict.fromkeys(base + learn))  # 순서 보존 dedup
         out.append(Problem(id=pid, name=p.get("name", pid),
                            description=p.get("description", ""),
-                           keywords=eff, base_keywords=base, learned_keywords=learn))
+                           keywords=eff, base_keywords=base, learned_keywords=learn,
+                           exclude_keywords=list(p.get("exclude_keywords", []))))
     return out
 
 
@@ -147,6 +162,7 @@ def load_config(path: str | Path) -> Config:
         llm=_mk(LLMConfig, raw.get("llm")),
         learn=_mk(LearnConfig, raw.get("learn")),
         notify=_mk(NotifyConfig, raw.get("notify")),
+        retention=_mk(RetentionConfig, raw.get("retention")),
         paths=paths,
         root=root,
     )

@@ -109,6 +109,25 @@ PC 가 켜져 있을 때만 돈다.
   `schtasks /create /tn "ResearchAgent" /tr "C:\경로\run_agent.bat" /sc daily /st 09:00`
 - **macOS**: `schedule/com.researchagent.daily.plist` + `launchctl load`.
 
+## 9. 탐색 정밀화 · 보존 · 피드백 (v3)
+
+**탐색 노이즈 줄이기.** 무관한 논문(특히 위상수학)이 많으면:
+- `arxiv.core_categories: ["math.CO","math.MG"]` — 탐색을 핵심 카테고리로 제한.
+- 문제별 `exclude_keywords` — 이 단어가 있으면 후보에서 제외(예: "machine learning").
+- `arxiv.explore_sample` 를 줄여 탐색량 자체를 축소.
+
+**논문 수 통제(보존 정책).** `retention` 으로 누적을 막는다. 즐겨찾기·좋아요는 항상 보호.
+- `keep_days`(이보다 오래되면 정리), `keep_top`(비보호 중 관련도 상위 N편만), `min_relevance`.
+- 매 실행 자동 적용. 수동은 `python prune.py [--keep-days 30] [--keep-top 50]`.
+- 정리분은 `data/archive.jsonl` 로 보관해 학습 이력은 유지.
+
+**즐겨찾기·피드백 → 탐색 기준 반영.** 대시보드 각 카드의 ⭐/👍/👎.
+- 기본은 이 기기(localStorage)에 저장. ⚙ 설정에서 GitHub 토큰을 넣으면
+  `data/feedback.json` 으로 저장소에 동기화 → 모든 기기 공유 + 다음 실행이 반영.
+- 반영 방식: 👍 는 강한 양성, 👎 는 강한 음성 라벨로 키워드 학습에 직접 들어가고,
+  즐겨찾기는 정리에서 보호되며 대시보드에서 "즐겨찾기 우선" 정렬·필터된다.
+- 토큰은 저장소 contents 쓰기로 범위를 한정한 fine-grained PAT 권장. 이 기기 브라우저에만 저장됨.
+
 ## 파일 구조
 
 ```

@@ -18,7 +18,7 @@ from agent import arxiv_source, prefilter as pf, summarize, corpus, digest
 from agent import keyword_learner as kl, dashboard, notify
 
 
-def _auto_optimize(cfg, all_records, log):
+def _auto_optimize(cfg, all_records, feedback, log):
     """문제별 키워드 학습. 항상 review 파일 생성, auto_apply 면 고신뢰 항 자동 적용."""
     learned_path = cfg.resolve(cfg.paths.learned)
     review_lines = []
@@ -26,7 +26,7 @@ def _auto_optimize(cfg, all_records, log):
         recs = [r for r in all_records if r.get("problem_id") == prob.id]
         if not recs:
             continue
-        proposals = kl.propose(recs, prob.keywords, top=25)
+        proposals = kl.propose(recs, prob.keywords, top=25, feedback=feedback)
         removals = kl.flag_overbroad(recs, prob.keywords)
         n_pos = sum(1 for r in recs if r.get("relevance", 0) >= 7)
         n_neg = sum(1 for r in recs if r.get("relevance", 0) <= 3)
@@ -74,11 +74,23 @@ def main() -> int:
     print(f"      {len(scored)}편 통과, 평가 대상 {len(candidates)}편 (상한 {cfg.llm.max_summarize})", flush=True)
 
     matched_ids = {s.paper.id for s in scored}
-    explore_pool = [p for p in fresh if p.id not in matched_ids]
+    # 전역 제외 키워드(어느 문제든 제외 목록에 든 항)
+    excl = [k for p in cfg.problems for k in p.exclude_keywords]
+    def _excluded(p):
+        if not excl:
+            return False
+        hay = f"{p.title}\n{p.abstract}".lower()
+        return any(k.lower() in hay for k in excl)
+    core = set(cfg.arxiv.core_categories or [])
+    explore_pool = [p for p in fresh
+                    if p.id not in matched_ids
+                    and not _excluded(p)
+                    and (not core or p.primary_category in core)]
     n_explore = min(cfg.arxiv.explore_sample, len(explore_pool))
     explore_papers = random.sample(explore_pool, n_explore) if n_explore else []
     if cfg.arxiv.explore_sample:
-        print(f"      탐색 대상 {len(explore_papers)}편 (비매칭 {len(explore_pool)}편 중)", flush=True)
+        scope = f"핵심카테고리 {sorted(core)}" if core else "전체"
+        print(f"      탐색 대상 {len(explore_papers)}편 ({scope}, 후보 {len(explore_pool)}편)", flush=True)
 
     if args.dry_run:
         print("\n[dry-run] 평가 대상:")
@@ -131,10 +143,21 @@ def main() -> int:
     done_ids = {corpus.base_id(e.paper.id) for e in evaluations if e.error is None}
     corpus.save_state(state_path, now, seen | done_ids)
 
+    # 피드백 로드(좋아요/싫어요/즐겨찾기) — 학습·정리·랭킹에 반영
+    from agent import feedback as fbmod, retention as ret
+    fb = fbmod.load_feedback(cfg.resolve(cfg.paths.feedback))
+
+    # 보존 정책 적용(누적 통제). 즐겨찾기·좋아요는 보호.
+    kept_n, dropped_n = ret.apply_retention(
+        cfg.resolve(cfg.paths.corpus), cfg.resolve(cfg.paths.archive),
+        cfg.retention, fb, now)
+    if dropped_n:
+        print(f"      보존 정리: 유지 {kept_n}편 / 아카이브 {dropped_n}편")
+
     all_records = kl.load_corpus(cfg.resolve(cfg.paths.corpus))
-    _auto_optimize(cfg, all_records, print)
+    _auto_optimize(cfg, all_records, fb, print)
     dashboard.write(all_records, cfg.resolve(cfg.paths.dashboard), now,
-                    problems=[(p.id, p.name) for p in cfg.problems])
+                    problems=[(p.id, p.name) for p in cfg.problems], feedback=fb)
 
     # 알림(이번 실행에서 임계 이상 새 논문)
     fresh_hits = [e for e in evaluations if e.error is None and e.relevance >= cfg.notify.min_relevance]
