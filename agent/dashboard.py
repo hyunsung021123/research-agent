@@ -299,9 +299,10 @@ async function triggerUpdate(){
       body: JSON.stringify({ref:"main"})
     });
     if(res.status === 204){
-      setSync("✅ 업데이트 시작됨 (1~3분 후 새로고침)");
-      // 3분 후 페이지 자동 새로고침
-      setTimeout(()=>location.reload(), 180000);
+      setSync("⏳ 업데이트 중… (완료되면 자동 새로고침)");
+      // workflow_dispatch 후 Actions API 에 run 이 나타날 때까지 잠시 대기
+      await new Promise(r=>setTimeout(r, 5000));
+      pollUntilDone(repo);
     } else {
       const err = await res.json().catch(()=>({}));
       const msg = err.message || res.status;
@@ -315,8 +316,42 @@ async function triggerUpdate(){
     setTimeout(()=>{
       refreshBtn.disabled = false;
       refreshBtn.classList.remove("loading");
-    }, 10000);  // 10초 후 버튼 재활성화(연속 클릭 방지)
+    }, 10000);
   }
+}
+
+// Actions 실행 완료 여부를 10초마다 polling — 완료되면 즉시 새로고침
+async function pollUntilDone(repo){
+  const hdr = {Authorization:`Bearer ${GH.token}`, Accept:"application/vnd.github+json"};
+  const maxWait = 60;  // 최대 10분(60회 × 10초)
+  let dots = 0;
+  for(let i=0; i<maxWait; i++){
+    await new Promise(r=>setTimeout(r, 10000));
+    dots = (dots % 3) + 1;
+    setSync("⏳ 업데이트 중" + ".".repeat(dots));
+    try{
+      const r = await fetch(
+        `https://api.github.com/repos/${repo}/actions/workflows/daily.yml/runs?per_page=1`,
+        {headers: hdr}
+      );
+      if(!r.ok) continue;
+      const data = await r.json();
+      const run = (data.workflow_runs||[])[0];
+      if(!run) continue;
+      if(run.status === "completed"){
+        if(run.conclusion === "success"){
+          setSync("✅ 완료! 새로고침 중…");
+          setTimeout(()=>location.reload(), 1500);
+        } else {
+          setSync(`❌ 실행 실패 (${run.conclusion})`);
+        }
+        return;
+      }
+    } catch(e){ /* 네트워크 일시 오류 무시 */ }
+  }
+  // 10분 초과 — 그냥 새로고침
+  setSync("⏱ 시간 초과, 새로고침 중…");
+  setTimeout(()=>location.reload(), 1500);
 }
 refreshBtn.addEventListener("click", triggerUpdate);
 apply();
