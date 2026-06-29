@@ -72,7 +72,7 @@ def load_corpus(path: Path) -> list[dict]:
     if not path.exists():
         return []
     out = []
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         for line in f:
             line = line.strip()
             if line:

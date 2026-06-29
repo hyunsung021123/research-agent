@@ -15,7 +15,7 @@ from typing import Iterable
 def load_state(path: Path) -> dict:
     if not path.exists():
         return {"last_run": None, "seen_ids": []}
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         d = json.load(f)
     d.setdefault("last_run", None)
     d.setdefault("seen_ids", [])
