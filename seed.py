@@ -75,12 +75,12 @@ SEEDS = [
         "authors": ["R. Cordovil", "I. P. da Silva"],
         "abstract": (
             "We give a version for oriented matroids of the McMullen problem: determine "
-            "the largest number f(d) such that f(d) points in general position in R^d "
-            "may be mapped by a permissible projective transformation onto the vertices "
-            "of a convex polytope. We prove that for every orientation of the uniform "
-            "matroid U_{2r-1,r} with r >= 3, there is an acyclic reorientation such that "
-            "all points are extreme points. This recovers the Larman lower bound f(d) >= 2d+1 "
-            "via oriented matroids and chirotopes."
+            "the largest number f(d) such that f(d) points in general position in d-dimensional "
+            "real space may be mapped by a permissible projective transformation onto the vertices "
+            "of a convex polytope. We prove that for every orientation of the uniform matroid "
+            "on 2r-1 elements of rank r with r at least 3, there is an acyclic reorientation "
+            "such that all points are extreme points. This recovers the Larman lower bound "
+            "f(d) is at least 2d+1 via oriented matroids and chirotopes."
         ),
         "published": "1985-01-01T00:00:00+00:00",
         "journal_ref": "European J. Combin. 6 (1985), 157-161",
@@ -99,12 +99,12 @@ SEEDS = [
         "authors": ["J. L. Ramirez Alfonsin"],
         "abstract": (
             "We consider the McMullen problem: determine the largest integer f(d) such "
-            "that any set of f(d) points in general position in R^d can be mapped by a "
-            "projective transformation onto the vertices of a convex polytope. Using "
-            "Lawrence oriented matroids, we prove the upper bound "
-            "f(d) < 2d + ceil((d+1)/2), improving the previous bound (d+1)(d+2)/2. "
-            "The technique analyzes acyclic reorientations of Lawrence oriented matroids "
-            "and tope structure."
+            "that any set of f(d) points in general position in affine d-dimensional space "
+            "can be mapped by a projective transformation onto the vertices of a convex polytope. "
+            "Using Lawrence oriented matroids, we prove a new upper bound showing that f(d) "
+            "is strictly less than 2d plus the ceiling of (d+1)/2, improving the previous "
+            "bound of (d+1)(d+2)/2. The technique analyzes acyclic reorientations of "
+            "Lawrence oriented matroids and tope structure."
         ),
         "published": "2001-01-01T00:00:00+00:00",
         "journal_ref": "European J. Combin. 22 (2001), 723-731",
