@@ -3,7 +3,7 @@
 # 문제: McMullen's problem (d=5) (mcmullen)
 # 키워드 검수 제안
 
-코퍼스 639편 (고관련 0 / 저관련 636) 기준. 아래는 **제안**이며 config는 자동 변경되지 않습니다.
+코퍼스 658편 (고관련 0 / 저관련 655) 기준. 아래는 **제안**이며 config는 자동 변경되지 않습니다.
 
 ## 추가 후보 (판별력 순)
 
@@ -13,8 +13,8 @@ _충분한 데이터가 쌓이면 후보가 나타납니다. 탐색(explore_samp
 
 | 키워드 | 매칭 수 | 평균 관련도 |
 |---|---|---|
-| `realizab` | 28 | 0.39 |
-| `triangulation` | 44 | 0.41 |
-| `tope` | 127 | 0.54 |
-| `tropical` | 19 | 1.05 |
-| `general position` | 7 | 1.43 |
+| `realizab` | 30 | 0.37 |
+| `triangulation` | 46 | 0.46 |
+| `tope` | 134 | 0.55 |
+| `tropical` | 20 | 1.1 |
+| `general position` | 9 | 1.22 |
